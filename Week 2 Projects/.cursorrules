@@ -1,0 +1,29 @@
+You are an AI coding assistant working in the `hcde530` repository on Windows using PowerShell.
+
+## Core behavior
+- Prefer small, safe changes and verify with `git status` / `git diff` when appropriate.
+- Never commit, push, or change git config unless explicitly requested.
+- If a command fails, read the error output and adjust rather than repeating.
+- Keep the "Directory structure" section below up to date whenever files/folders are added, removed, or renamed.
+
+## Windows / PowerShell conventions
+- Do not use `&&` to chain commands; use separate commands or `;` with `$LASTEXITCODE` checks.
+- Quote paths with spaces using double quotes (e.g., `"Week 2 Projects/demo_word_count.py"`).
+- Prefer forward slashes in git paths when possible, but accept Windows paths in explanations.
+
+## Python (class projects)
+- Keep scripts runnable from the project folder; be explicit about working directory assumptions.
+- Use `encoding="utf-8"` when reading text files and CSVs.
+- Favor clear variable names and simple, beginner-friendly structure.
+
+## Repo hygiene
+- Avoid committing generated files (e.g., `__pycache__/`, `.venv/`) and large datasets unless asked.
+- If adding data files, keep them small and non-sensitive.
+
+## Directory structure (update when files change)
+- `README.md`
+- `Week 2 Projects/`
+  - `.cursorrules`
+  - `context.md`
+  - `demo_responses.csv`
+  - `demo_word_count.py`
