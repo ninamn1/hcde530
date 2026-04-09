@@ -24,6 +24,8 @@ You are an AI coding assistant working in the `hcde530` repository on Windows us
 - `README.md`
 - `Week 2 Projects/`
   - `.cursorrules`
+  - `app_review_word_count.py`
   - `context.md`
   - `demo_responses.csv`
   - `demo_word_count.py`
+  - `week2.md`
