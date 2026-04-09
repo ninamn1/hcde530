@@ -20,7 +20,7 @@ def count_words(response):
     return len(response.split())
 
 
-# Count words in each response and print a row-by-row summary
+# Count words in each response and print a row-by-row summary so that we have readable output
 print(f"{'ID':<6} {'Role':<22} {'Words':<6} {'Response (first 60 chars)'}")
 print("-" * 75)
 
