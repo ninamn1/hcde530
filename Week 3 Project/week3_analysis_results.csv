@@ -1,0 +1,17 @@
+section,key,value,extra
+role_counts,,1,
+role_counts,Content Strategist,6,
+role_counts,Product Manager,6,
+role_counts,Ux Designer,10,
+role_counts,Ux Researcher,12,
+dept_avg_experience,Research,9.38,n=8
+dept_avg_experience,Engineering,7.67,n=3
+dept_avg_experience,Product,7.27,n=11
+dept_avg_experience,Marketing,7.00,n=6
+dept_avg_experience,Design,5.14,n=7
+overall_avg_experience,all_participants,7.09,
+top5_satisfaction,Lena Kowalski,5,
+top5_satisfaction,Noel Adeyemi,5,
+top5_satisfaction,Marco Di Luca,5,
+top5_satisfaction,Asha Patel,5,
+top5_satisfaction,Sam Torres,5,
