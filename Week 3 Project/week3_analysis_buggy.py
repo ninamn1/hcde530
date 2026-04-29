@@ -1,5 +1,7 @@
 import csv
 
+# Fixed ValueError: Originally couldn't run the script because of an invalid string literal.
+# Parse numeric cells: digits first, then a small word list (e.g. "fifteen" -> 15) so analysis can use real numbers.
 def parse_int(value: str) -> int | None:
     if value is None:
         return None
@@ -39,7 +41,7 @@ def parse_int(value: str) -> int | None:
 
     return word_to_int.get(text.lower())
 
-
+# For each department, count people and average years of experience (uses parse_int for years).
 def department_experience_summary(rows: list[dict[str, str]]) -> list[tuple[str, int, float]]:
     """Summarize participants by department and average experience.
 
@@ -51,9 +53,9 @@ def department_experience_summary(rows: list[dict[str, str]]) -> list[tuple[str,
 
         - `department` is normalized with `.strip().title()`. Missing departments become "(Missing)".
         - `n_participants` counts all rows in that department (even if experience is missing/non-numeric).
-        - `avg_years_experience` is computed using only rows where `experience_years` can be converted
-          to an integer. Non-numeric values (e.g., "fifteen") are skipped. If a department has no
-          numeric experience values, its average is 0.0.
+        - `avg_years_experience` uses `parse_int` on `experience_years`. Digit strings and mapped word
+          numbers (e.g. "fifteen" -> 15) count toward the average; anything `parse_int` cannot read is
+          skipped. If a department has no usable experience values, its average is 0.0.
 
     Note:
         This function does not sort the output; sort the returned list at the call site.
@@ -82,6 +84,7 @@ def department_experience_summary(rows: list[dict[str, str]]) -> list[tuple[str,
     return summary
 
 
+# Write one results CSV with tagged sections (roles, departments, overall average, top satisfaction).
 def write_analysis_csv(
     output_path: str,
     role_counts: dict[str, int],
@@ -126,6 +129,7 @@ def write_analysis_csv(
             )
 
 
+# Cleaning function: trim fields, title-case labels, parse numeric columns into digit strings (or blank).
 def clean_survey_rows(rows: list[dict[str, str]], fieldnames: list[str]) -> list[dict[str, str]]:
     cleaned: list[dict[str, str]] = []
 
@@ -155,6 +159,7 @@ def clean_survey_rows(rows: list[dict[str, str]], fieldnames: list[str]) -> list
     return cleaned
 
 
+# Read messy CSV → clean_survey_rows → write a new cleaned CSV (original file unchanged).
 def write_clean_survey_csv(
     input_path: str,
     output_path: str,
@@ -171,8 +176,8 @@ def write_clean_survey_csv(
         writer.writerows(cleaned)
 
 
-
-# Load the survey data from a CSV file
+# Part 1: Cleaned the messy survey data and wrote a new cleaned CSV file.
+# a) Load messy survey into memory.
 filename = "week3_survey_messy.csv"
 rows = []
 
@@ -181,12 +186,14 @@ with open(filename, newline="", encoding="utf-8") as f:
     for row in reader:
         rows.append(row)
 
+# b) Write cleaned survey to a new file.
 cleaned_filename = "week3_survey_cleaned.csv"
 write_clean_survey_csv(filename, cleaned_filename)
 print(f"Wrote cleaned survey CSV: {cleaned_filename}")
 
-# Count responses by role
-# Normalize role names so "ux researcher" and "UX Researcher" are counted together
+
+# Part 2: Created a new analysis CSV file with the summarized analysis.
+# a) Count responses by role (normalize capitalization so the same role strings match).
 role_counts = {}
 
 for row in rows:
@@ -200,6 +207,7 @@ print("Responses by role:")
 for role, count in sorted(role_counts.items()):
     print(f"  {role}: {count}")
 
+# b) Department averages (highest average first in the printout).
 dept_summary = department_experience_summary(rows)
 dept_summary.sort(key=lambda x: x[2], reverse=True)
 print("\nDepartments by average experience (high -> low):")
@@ -207,22 +215,22 @@ for dept, n_participants, avg_years in dept_summary:
     print(f"  {dept}: avg {avg_years:.1f} years (n={n_participants})")
 
 
-# Calculate the average years of experience
+# c) Overall average years of experience (same parse_int rule as elsewhere so word-years count if mapped).
 total_experience = 0
 valid_experience_rows = 0
 
 for row in rows:
-    try:
-        total_experience += int(row["experience_years"])
-        valid_experience_rows += 1
-    except ValueError:
-        # handle bad data like "fifteen"
+    years = parse_int((row.get("experience_years") or "").strip())
+    if years is None:
         continue
+    total_experience += years
+    valid_experience_rows += 1
 
 avg_experience = total_experience / valid_experience_rows
 print(f"\nAverage years of experience: {avg_experience:.1f}")
 
-# Find the top 5 highest satisfaction scores
+# d) Top 5 satisfaction scores (sort, take top five, print highest-first).
+# Fixed logic bug: Originally took the lowest 5 satisfaction scores instead of the highest 5.
 scored_rows = []
 for row in rows:
     if row["satisfaction_score"].strip():
@@ -236,6 +244,7 @@ print("\nTop 5 satisfaction scores:")
 for name, score in top5:
     print(f"  {name}: {score}")
 
+# e) Save analysis summary to CSV.
 output_csv = "week3_analysis_results.csv"
 write_analysis_csv(output_csv, role_counts, dept_summary, avg_experience, top5)
 print(f"\nWrote analysis CSV: {output_csv}")
