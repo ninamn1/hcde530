@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fairy type — API dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --panel: #1a2332;
+      --text: #e8eef7;
+      --muted: #8b9bb4;
+      --accent: #f472b6;
+      --accent2: #93c5fd;
+      --border: #2d3a4d;
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: linear-gradient(165deg, var(--bg) 0%, #151d28 50%, #0c1018 100%);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.45;
+    }
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem 1.25rem 3rem;
+    }
+    header {
+      margin-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1.25rem;
+    }
+    header h1 {
+      margin: 0 0 0.35rem;
+      font-size: 1.65rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+      max-width: 52ch;
+    }
+    header code { font-size: 0.85em; color: var(--accent2); }
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .kpi {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.15rem;
+    }
+    .kpi .label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin-bottom: 0.35rem;
+    }
+    .kpi .value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .grid {
+      display: grid;
+      gap: 1.5rem;
+    }
+    @media (min-width: 860px) {
+      .grid-2 { grid-template-columns: 1fr 1fr; }
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+    }
+    .panel h2 {
+      margin: 0 0 1rem;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--accent2);
+    }
+    canvas { max-height: 320px; }
+    .chart-tall canvas { max-height: 480px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.5rem 0.65rem;
+      border-bottom: 1px solid var(--border);
+    }
+    th {
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    tr:hover td { background: rgba(255,255,255,0.03); }
+    a {
+      color: var(--accent2);
+      text-decoration: none;
+    }
+    a:hover { text-decoration: underline; }
+    .footnote {
+      margin-top: 2rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    input[type="search"] {
+      width: 100%;
+      margin-bottom: 0.75rem;
+      padding: 0.5rem 0.65rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font: inherit;
+    }
+    .scroll {
+      max-height: 280px;
+      overflow: auto;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Fairy type — PokéAPI snapshot</h1>
+      <p>
+        Built from <code>pokeapi_fairy_type_responses_1.csv</code>,
+        <code>pokeapi_fairy_type_responses_2.csv</code>, and
+        <code>pokeapi_fairy_type_responses_3.csv</code>.
+        <em>Slot</em> is whether Fairy is listed as type 1 or type 2 for that Pokémon.
+      </p>
+    </header>
+
+    <div class="kpis" id="kpis"></div>
+
+    <div class="grid grid-2">
+      <div class="panel">
+        <h2>Fairy slot (type 1 vs type 2)</h2>
+        <canvas id="chartSlots" aria-label="Slot distribution"></canvas>
+      </div>
+      <div class="panel">
+        <h2>Damage relation groups (count per category)</h2>
+        <canvas id="chartRelations" aria-label="Damage relations"></canvas>
+      </div>
+    </div>
+
+    <div class="panel chart-tall" style="margin-top:1.5rem;">
+      <h2>Move names by character length</h2>
+      <p style="margin:0 0 1rem; color: var(--muted); font-size: 0.88rem;">
+        Sorted by longest name first. Compound names (e.g. some special moves) tend to rank higher.
+      </p>
+      <canvas id="chartMoveLen" aria-label="Move name lengths"></canvas>
+    </div>
+
+    <div class="grid" style="margin-top:1.5rem;">
+      <div class="panel">
+        <h2>Pokémon (filterable)</h2>
+        <input type="search" id="filterPoke" placeholder="Filter by name…" autocomplete="off" />
+        <div class="scroll">
+          <table>
+            <thead><tr><th>Name</th><th>Slot</th><th>Link</th></tr></thead>
+            <tbody id="tblPoke"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Moves (filterable)</h2>
+        <input type="search" id="filterMove" placeholder="Filter by name…" autocomplete="off" />
+        <div class="scroll">
+          <table>
+            <thead><tr><th>Move</th><th>Link</th></tr></thead>
+            <tbody id="tblMoves"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:1.5rem;">
+      <h2>Damage relations (full table)</h2>
+      <div class="scroll" style="max-height:360px;">
+        <table>
+          <thead><tr><th>Category</th><th>Related type</th><th>Link</th></tr></thead>
+          <tbody id="tblDamage"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <p class="footnote">
+      Regenerate: <code>python build_fairy_dashboard.py</code> in this folder after updating the CSVs.
+    </p>
+  </div>
+
+  <script id="dashboard-data" type="application/json">{"pokemon": [{"name": "clefairy", "url": "https://pokeapi.co/api/v2/pokemon/35/", "slot": "1"}, {"name": "clefable", "url": "https://pokeapi.co/api/v2/pokemon/36/", "slot": "1"}, {"name": "jigglypuff", "url": "https://pokeapi.co/api/v2/pokemon/39/", "slot": "2"}, {"name": "wigglytuff", "url": "https://pokeapi.co/api/v2/pokemon/40/", "slot": "2"}, {"name": "mr-mime", "url": "https://pokeapi.co/api/v2/pokemon/122/", "slot": "2"}, {"name": "cleffa", "url": "https://pokeapi.co/api/v2/pokemon/173/", "slot": "1"}, {"name": "igglybuff", "url": "https://pokeapi.co/api/v2/pokemon/174/", "slot": "2"}, {"name": "togepi", "url": "https://pokeapi.co/api/v2/pokemon/175/", "slot": "1"}, {"name": "togetic", "url": "https://pokeapi.co/api/v2/pokemon/176/", "slot": "1"}, {"name": "marill", "url": "https://pokeapi.co/api/v2/pokemon/183/", "slot": "2"}, {"name": "azumarill", "url": "https://pokeapi.co/api/v2/pokemon/184/", "slot": "2"}, {"name": "snubbull", "url": "https://pokeapi.co/api/v2/pokemon/209/", "slot": "1"}, {"name": "granbull", "url": "https://pokeapi.co/api/v2/pokemon/210/", "slot": "1"}, {"name": "ralts", "url": "https://pokeapi.co/api/v2/pokemon/280/", "slot": "2"}, {"name": "kirlia", "url": "https://pokeapi.co/api/v2/pokemon/281/", "slot": "2"}, {"name": "gardevoir", "url": "https://pokeapi.co/api/v2/pokemon/282/", "slot": "2"}, {"name": "azurill", "url": "https://pokeapi.co/api/v2/pokemon/298/", "slot": "2"}, {"name": "mawile", "url": "https://pokeapi.co/api/v2/pokemon/303/", "slot": "2"}, {"name": "mime-jr", "url": "https://pokeapi.co/api/v2/pokemon/439/", "slot": "2"}, {"name": "togekiss", "url": "https://pokeapi.co/api/v2/pokemon/468/", "slot": "1"}, {"name": "cottonee", "url": "https://pokeapi.co/api/v2/pokemon/546/", "slot": "2"}, {"name": "whimsicott", "url": "https://pokeapi.co/api/v2/pokemon/547/", "slot": "2"}, {"name": "flabebe", "url": "https://pokeapi.co/api/v2/pokemon/669/", "slot": "1"}, {"name": "floette", "url": "https://pokeapi.co/api/v2/pokemon/670/", "slot": "1"}, {"name": "florges", "url": "https://pokeapi.co/api/v2/pokemon/671/", "slot": "1"}, {"name": "spritzee", "url": "https://pokeapi.co/api/v2/pokemon/682/", "slot": "1"}, {"name": "aromatisse", "url": "https://pokeapi.co/api/v2/pokemon/683/", "slot": "1"}, {"name": "swirlix", "url": "https://pokeapi.co/api/v2/pokemon/684/", "slot": "1"}, {"name": "slurpuff", "url": "https://pokeapi.co/api/v2/pokemon/685/", "slot": "1"}, {"name": "sylveon", "url": "https://pokeapi.co/api/v2/pokemon/700/", "slot": "1"}, {"name": "dedenne", "url": "https://pokeapi.co/api/v2/pokemon/702/", "slot": "2"}, {"name": "carbink", "url": "https://pokeapi.co/api/v2/pokemon/703/", "slot": "2"}, {"name": "klefki", "url": "https://pokeapi.co/api/v2/pokemon/707/", "slot": "2"}, {"name": "xerneas", "url": "https://pokeapi.co/api/v2/pokemon/716/", "slot": "1"}, {"name": "diancie", "url": "https://pokeapi.co/api/v2/pokemon/719/", "slot": "2"}, {"name": "primarina", "url": "https://pokeapi.co/api/v2/pokemon/730/", "slot": "2"}, {"name": "cutiefly", "url": "https://pokeapi.co/api/v2/pokemon/742/", "slot": "2"}, {"name": "ribombee", "url": "https://pokeapi.co/api/v2/pokemon/743/", "slot": "2"}, {"name": "morelull", "url": "https://pokeapi.co/api/v2/pokemon/755/", "slot": "2"}, {"name": "shiinotic", "url": "https://pokeapi.co/api/v2/pokemon/756/", "slot": "2"}, {"name": "comfey", "url": "https://pokeapi.co/api/v2/pokemon/764/", "slot": "1"}, {"name": "mimikyu-disguised", "url": "https://pokeapi.co/api/v2/pokemon/778/", "slot": "2"}, {"name": "tapu-koko", "url": "https://pokeapi.co/api/v2/pokemon/785/", "slot": "2"}, {"name": "tapu-lele", "url": "https://pokeapi.co/api/v2/pokemon/786/", "slot": "2"}, {"name": "tapu-bulu", "url": "https://pokeapi.co/api/v2/pokemon/787/", "slot": "2"}, {"name": "tapu-fini", "url": "https://pokeapi.co/api/v2/pokemon/788/", "slot": "2"}, {"name": "magearna", "url": "https://pokeapi.co/api/v2/pokemon/801/", "slot": "2"}, {"name": "hatterene", "url": "https://pokeapi.co/api/v2/pokemon/858/", "slot": "2"}, {"name": "impidimp", "url": "https://pokeapi.co/api/v2/pokemon/859/", "slot": "2"}, {"name": "morgrem", "url": "https://pokeapi.co/api/v2/pokemon/860/", "slot": "2"}, {"name": "grimmsnarl", "url": "https://pokeapi.co/api/v2/pokemon/861/", "slot": "2"}, {"name": "milcery", "url": "https://pokeapi.co/api/v2/pokemon/868/", "slot": "1"}, {"name": "alcremie", "url": "https://pokeapi.co/api/v2/pokemon/869/", "slot": "1"}, {"name": "zacian", "url": "https://pokeapi.co/api/v2/pokemon/888/", "slot": "1"}, {"name": "enamorus-incarnate", "url": "https://pokeapi.co/api/v2/pokemon/905/", "slot": "1"}, {"name": "fidough", "url": "https://pokeapi.co/api/v2/pokemon/926/", "slot": "1"}, {"name": "dachsbun", "url": "https://pokeapi.co/api/v2/pokemon/927/", "slot": "1"}, {"name": "tinkatink", "url": "https://pokeapi.co/api/v2/pokemon/957/", "slot": "1"}, {"name": "tinkatuff", "url": "https://pokeapi.co/api/v2/pokemon/958/", "slot": "1"}, {"name": "tinkaton", "url": "https://pokeapi.co/api/v2/pokemon/959/", "slot": "1"}, {"name": "scream-tail", "url": "https://pokeapi.co/api/v2/pokemon/985/", "slot": "1"}, {"name": "flutter-mane", "url": "https://pokeapi.co/api/v2/pokemon/987/", "slot": "2"}, {"name": "iron-valiant", "url": "https://pokeapi.co/api/v2/pokemon/1006/", "slot": "1"}, {"name": "fezandipiti", "url": "https://pokeapi.co/api/v2/pokemon/1016/", "slot": "2"}, {"name": "gardevoir-mega", "url": "https://pokeapi.co/api/v2/pokemon/10051/", "slot": "2"}, {"name": "mawile-mega", "url": "https://pokeapi.co/api/v2/pokemon/10052/", "slot": "2"}, {"name": "floette-eternal", "url": "https://pokeapi.co/api/v2/pokemon/10061/", "slot": "1"}, {"name": "altaria-mega", "url": "https://pokeapi.co/api/v2/pokemon/10067/", "slot": "2"}, {"name": "audino-mega", "url": "https://pokeapi.co/api/v2/pokemon/10069/", "slot": "2"}, {"name": "diancie-mega", "url": "https://pokeapi.co/api/v2/pokemon/10075/", "slot": "2"}, {"name": "ninetales-alola", "url": "https://pokeapi.co/api/v2/pokemon/10104/", "slot": "2"}, {"name": "mimikyu-busted", "url": "https://pokeapi.co/api/v2/pokemon/10143/", "slot": "2"}, {"name": "mimikyu-totem-disguised", "url": "https://pokeapi.co/api/v2/pokemon/10144/", "slot": "2"}, {"name": "mimikyu-totem-busted", "url": "https://pokeapi.co/api/v2/pokemon/10145/", "slot": "2"}, {"name": "magearna-original", "url": "https://pokeapi.co/api/v2/pokemon/10147/", "slot": "2"}, {"name": "ribombee-totem", "url": "https://pokeapi.co/api/v2/pokemon/10150/", "slot": "2"}, {"name": "rapidash-galar", "url": "https://pokeapi.co/api/v2/pokemon/10163/", "slot": "2"}, {"name": "weezing-galar", "url": "https://pokeapi.co/api/v2/pokemon/10167/", "slot": "2"}, {"name": "zacian-crowned", "url": "https://pokeapi.co/api/v2/pokemon/10188/", "slot": "1"}, {"name": "hatterene-gmax", "url": "https://pokeapi.co/api/v2/pokemon/10221/", "slot": "2"}, {"name": "grimmsnarl-gmax", "url": "https://pokeapi.co/api/v2/pokemon/10222/", "slot": "2"}, {"name": "alcremie-gmax", "url": "https://pokeapi.co/api/v2/pokemon/10223/", "slot": "1"}, {"name": "enamorus-therian", "url": "https://pokeapi.co/api/v2/pokemon/10249/", "slot": "1"}, {"name": "clefable-mega", "url": "https://pokeapi.co/api/v2/pokemon/10278/", "slot": "1"}, {"name": "meganium-mega", "url": "https://pokeapi.co/api/v2/pokemon/10282/", "slot": "2"}, {"name": "floette-mega", "url": "https://pokeapi.co/api/v2/pokemon/10296/", "slot": "1"}, {"name": "magearna-mega", "url": "https://pokeapi.co/api/v2/pokemon/10317/", "slot": "2"}, {"name": "magearna-original-mega", "url": "https://pokeapi.co/api/v2/pokemon/10318/", "slot": "2"}], "moves": [{"name": "sweet-kiss", "url": "https://pokeapi.co/api/v2/move/186/"}, {"name": "charm", "url": "https://pokeapi.co/api/v2/move/204/"}, {"name": "moonlight", "url": "https://pokeapi.co/api/v2/move/236/"}, {"name": "disarming-voice", "url": "https://pokeapi.co/api/v2/move/574/"}, {"name": "draining-kiss", "url": "https://pokeapi.co/api/v2/move/577/"}, {"name": "crafty-shield", "url": "https://pokeapi.co/api/v2/move/578/"}, {"name": "flower-shield", "url": "https://pokeapi.co/api/v2/move/579/"}, {"name": "misty-terrain", "url": "https://pokeapi.co/api/v2/move/581/"}, {"name": "play-rough", "url": "https://pokeapi.co/api/v2/move/583/"}, {"name": "fairy-wind", "url": "https://pokeapi.co/api/v2/move/584/"}, {"name": "moonblast", "url": "https://pokeapi.co/api/v2/move/585/"}, {"name": "fairy-lock", "url": "https://pokeapi.co/api/v2/move/587/"}, {"name": "aromatic-mist", "url": "https://pokeapi.co/api/v2/move/597/"}, {"name": "geomancy", "url": "https://pokeapi.co/api/v2/move/601/"}, {"name": "dazzling-gleam", "url": "https://pokeapi.co/api/v2/move/605/"}, {"name": "baby-doll-eyes", "url": "https://pokeapi.co/api/v2/move/608/"}, {"name": "light-of-ruin", "url": "https://pokeapi.co/api/v2/move/617/"}, {"name": "twinkle-tackle--physical", "url": "https://pokeapi.co/api/v2/move/656/"}, {"name": "twinkle-tackle--special", "url": "https://pokeapi.co/api/v2/move/657/"}, {"name": "floral-healing", "url": "https://pokeapi.co/api/v2/move/666/"}, {"name": "guardian-of-alola", "url": "https://pokeapi.co/api/v2/move/698/"}, {"name": "fleur-cannon", "url": "https://pokeapi.co/api/v2/move/705/"}, {"name": "natures-madness", "url": "https://pokeapi.co/api/v2/move/717/"}, {"name": "lets-snuggle-forever", "url": "https://pokeapi.co/api/v2/move/726/"}, {"name": "sparkly-swirl", "url": "https://pokeapi.co/api/v2/move/740/"}, {"name": "max-starfall", "url": "https://pokeapi.co/api/v2/move/767/"}, {"name": "decorate", "url": "https://pokeapi.co/api/v2/move/777/"}, {"name": "spirit-break", "url": "https://pokeapi.co/api/v2/move/789/"}, {"name": "strange-steam", "url": "https://pokeapi.co/api/v2/move/790/"}, {"name": "misty-explosion", "url": "https://pokeapi.co/api/v2/move/802/"}, {"name": "springtide-storm", "url": "https://pokeapi.co/api/v2/move/831/"}, {"name": "magical-torque", "url": "https://pokeapi.co/api/v2/move/900/"}, {"name": "alluring-voice", "url": "https://pokeapi.co/api/v2/move/914/"}], "damage": [{"relation_category": "double_damage_from", "related_type_name": "poison", "related_type_url": "https://pokeapi.co/api/v2/type/4/"}, {"relation_category": "double_damage_from", "related_type_name": "steel", "related_type_url": "https://pokeapi.co/api/v2/type/9/"}, {"relation_category": "double_damage_to", "related_type_name": "fighting", "related_type_url": "https://pokeapi.co/api/v2/type/2/"}, {"relation_category": "double_damage_to", "related_type_name": "dragon", "related_type_url": "https://pokeapi.co/api/v2/type/16/"}, {"relation_category": "double_damage_to", "related_type_name": "dark", "related_type_url": "https://pokeapi.co/api/v2/type/17/"}, {"relation_category": "half_damage_from", "related_type_name": "fighting", "related_type_url": "https://pokeapi.co/api/v2/type/2/"}, {"relation_category": "half_damage_from", "related_type_name": "bug", "related_type_url": "https://pokeapi.co/api/v2/type/7/"}, {"relation_category": "half_damage_from", "related_type_name": "dark", "related_type_url": "https://pokeapi.co/api/v2/type/17/"}, {"relation_category": "half_damage_to", "related_type_name": "poison", "related_type_url": "https://pokeapi.co/api/v2/type/4/"}, {"relation_category": "half_damage_to", "related_type_name": "steel", "related_type_url": "https://pokeapi.co/api/v2/type/9/"}, {"relation_category": "half_damage_to", "related_type_name": "fire", "related_type_url": "https://pokeapi.co/api/v2/type/10/"}, {"relation_category": "no_damage_from", "related_type_name": "dragon", "related_type_url": "https://pokeapi.co/api/v2/type/16/"}], "slotCounts": {"1": 35, "2": 53}, "relationCounts": {"double_damage_from": 2, "double_damage_to": 3, "half_damage_from": 3, "half_damage_to": 3, "no_damage_from": 1}, "moveLengths": [{"name": "twinkle-tackle--physical", "len": 24}, {"name": "twinkle-tackle--special", "len": 23}, {"name": "lets-snuggle-forever", "len": 20}, {"name": "guardian-of-alola", "len": 17}, {"name": "springtide-storm", "len": 16}, {"name": "disarming-voice", "len": 15}, {"name": "misty-explosion", "len": 15}, {"name": "natures-madness", "len": 15}, {"name": "alluring-voice", "len": 14}, {"name": "baby-doll-eyes", "len": 14}, {"name": "dazzling-gleam", "len": 14}, {"name": "floral-healing", "len": 14}, {"name": "magical-torque", "len": 14}, {"name": "aromatic-mist", "len": 13}, {"name": "crafty-shield", "len": 13}, {"name": "draining-kiss", "len": 13}, {"name": "flower-shield", "len": 13}, {"name": "light-of-ruin", "len": 13}, {"name": "misty-terrain", "len": 13}, {"name": "sparkly-swirl", "len": 13}, {"name": "strange-steam", "len": 13}, {"name": "fleur-cannon", "len": 12}, {"name": "max-starfall", "len": 12}, {"name": "spirit-break", "len": 12}, {"name": "fairy-lock", "len": 10}, {"name": "fairy-wind", "len": 10}, {"name": "play-rough", "len": 10}, {"name": "sweet-kiss", "len": 10}, {"name": "moonblast", "len": 9}, {"name": "moonlight", "len": 9}, {"name": "decorate", "len": 8}, {"name": "geomancy", "len": 8}, {"name": "charm", "len": 5}], "stats": {"pokemon_total": 88, "moves_total": 33, "damage_rows": 12}}</script>
+  <script>
+(function () {
+  const DATA = JSON.parse(document.getElementById("dashboard-data").textContent);
+
+  const k = document.getElementById("kpis");
+  k.innerHTML =
+    '<div class="kpi"><div class="label">Fairy Pokémon listed</div><div class="value">' +
+    DATA.stats.pokemon_total +
+    '</div></div>' +
+    '<div class="kpi"><div class="label">Fairy moves</div><div class="value">' +
+    DATA.stats.moves_total +
+    '</div></div>' +
+    '<div class="kpi"><div class="label">Damage relation rows</div><div class="value">' +
+    DATA.stats.damage_rows +
+    "</div></div>";
+
+  const slotLabels = Object.keys(DATA.slotCounts).sort();
+  const slotValues = slotLabels.map(function (s) { return DATA.slotCounts[s]; });
+  new Chart(document.getElementById("chartSlots"), {
+    type: "doughnut",
+    data: {
+      labels: slotLabels.map(function (s) { return "Slot " + s; }),
+      datasets: [
+        {
+          data: slotValues,
+          backgroundColor: ["#f472b6", "#60a5fa", "#a78bfa"],
+          borderWidth: 0,
+        },
+      ],
+    },
+    options: {
+      plugins: {
+        legend: { position: "bottom", labels: { color: "#e8eef7" } },
+      },
+      maintainAspectRatio: false,
+    },
+  });
+
+  const relLabels = Object.keys(DATA.relationCounts).sort();
+  const relVals = relLabels.map(function (k) { return DATA.relationCounts[k]; });
+  new Chart(document.getElementById("chartRelations"), {
+    type: "bar",
+    data: {
+      labels: relLabels,
+      datasets: [
+        {
+          label: "Related types listed",
+          data: relVals,
+          backgroundColor: "#93c5fd",
+          borderRadius: 6,
+        },
+      ],
+    },
+    options: {
+      indexAxis: "y",
+      plugins: { legend: { display: false } },
+      scales: {
+        x: {
+          beginAtZero: true,
+          ticks: { color: "#8b9bb4", precision: 0 },
+          grid: { color: "#2d3a4d" },
+        },
+        y: {
+          ticks: { color: "#e8eef7", font: { size: 10 } },
+          grid: { display: false },
+        },
+      },
+      maintainAspectRatio: false,
+    },
+  });
+
+  var ml = DATA.moveLengths;
+  new Chart(document.getElementById("chartMoveLen"), {
+    type: "bar",
+    data: {
+      labels: ml.map(function (m) { return m.name; }),
+      datasets: [
+        {
+          label: "Characters",
+          data: ml.map(function (m) { return m.len; }),
+          backgroundColor: "rgba(244, 114, 182, 0.65)",
+          borderRadius: 4,
+        },
+      ],
+    },
+    options: {
+      indexAxis: "y",
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function (ctx) {
+              return "Length: " + ctx.raw;
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
+          beginAtZero: true,
+          ticks: { color: "#8b9bb4", precision: 0 },
+          grid: { color: "#2d3a4d" },
+        },
+        y: {
+          ticks: { color: "#e8eef7", font: { size: 9 }, autoSkip: false },
+          grid: { display: false },
+        },
+      },
+      maintainAspectRatio: false,
+    },
+  });
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+  function escapeAttr(s) {
+    return String(s).replace(/"/g, "&quot;");
+  }
+
+  function rowsPoke(rows) {
+    var tb = document.getElementById("tblPoke");
+    tb.innerHTML = rows
+      .map(function (r) {
+        return (
+          "<tr><td>" +
+          escapeHtml(r.name) +
+          "</td><td>" +
+          escapeHtml(r.slot) +
+          '</td><td><a href="' +
+          escapeAttr(r.url) +
+          '">API</a></td></tr>'
+        );
+      })
+      .join("");
+  }
+  function rowsMoves(rows) {
+    var tb = document.getElementById("tblMoves");
+    tb.innerHTML = rows
+      .map(function (r) {
+        return (
+          "<tr><td>" +
+          escapeHtml(r.name) +
+          '</td><td><a href="' +
+          escapeAttr(r.url) +
+          '">API</a></td></tr>'
+        );
+      })
+      .join("");
+  }
+  function rowsDamage(rows) {
+    var tb = document.getElementById("tblDamage");
+    tb.innerHTML = rows
+      .map(function (r) {
+        return (
+          "<tr><td>" +
+          escapeHtml(r.relation_category) +
+          "</td><td>" +
+          escapeHtml(r.related_type_name) +
+          '</td><td><a href="' +
+          escapeAttr(r.related_type_url) +
+          '">API</a></td></tr>'
+        );
+      })
+      .join("");
+  }
+
+  rowsPoke(DATA.pokemon);
+  rowsMoves(DATA.moves);
+  rowsDamage(DATA.damage);
+
+  document.getElementById("filterPoke").addEventListener("input", function (e) {
+    var q = e.target.value.trim().toLowerCase();
+    rowsPoke(DATA.pokemon.filter(function (r) { return r.name.toLowerCase().indexOf(q) !== -1; }));
+  });
+  document.getElementById("filterMove").addEventListener("input", function (e) {
+    var q = e.target.value.trim().toLowerCase();
+    rowsMoves(DATA.moves.filter(function (r) { return r.name.toLowerCase().indexOf(q) !== -1; }));
+  });
+})();
+  </script>
+</body>
+</html>
