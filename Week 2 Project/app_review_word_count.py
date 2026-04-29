@@ -1,7 +1,7 @@
 def count_words(text: str) -> int:
+    """Rough word count by splitting on whitespace (same idea as demo_word_count)."""
     return len(text.split())
 
-# Function to count the words in a review
 def main() -> None:
     reviews = [
         "Love the clean layout and the reminders are actually helpful.",
@@ -61,13 +61,16 @@ def main() -> None:
 
     word_counts: list[int] = []
 
+    # Walk every review: label with 1-based review numbers (easier to read than starting at 0), count words, show a short preview.
     for i, review in enumerate(reviews, start=1):
         n = count_words(review)
         word_counts.append(n)
 
+        # First 60 characters only so long reviews don't fill the screen; counting still uses the full string.
         preview = review if len(review) <= 60 else review[:60] + "..."
         print(f"{i:<8} {n:<6} {preview}")
 
+    # Totals and min/max/average give a quick quantitative overview next to the row-by-row table.
     print()
     print("── Summary ─────────────────────────────────")
     print(f"  Total reviews  : {len(word_counts)}")
