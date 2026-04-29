@@ -6,7 +6,13 @@ Data cleaning and file handling mean **standardizing messy inputs** so analysis 
 
 ## What I did (concrete)
 
-I started with **`week3_survey_messy.csv`** and **`week3_analysis_buggy.py`**. The script reads survey data from the messy CSV; I inspected the script, **identified and fixed bugs**, and those fixes fed into a cleaned output file, **`week3_survey_cleaned.csv`**. I then **added functions** to `week3_analysis_buggy.py`, and the extended analysis was written out as **`week3_analysis_results.csv`**.
+I started with **`week3_survey_messy.csv`** and **`week3_analysis_buggy.py`**. The script reads survey data from the messy CSV; I ran it, read the errors, and **fixed two main bugs**:
+
+1. **`ValueError` on experience (`experience_years`):** At least one row had years typed as a **word** (e.g. `"fifteen"`) instead of digits. Plain `int(...)` can’t convert that, so the script crashed or skipped the value. I added a **`parse_int`** helper so normal digit strings still work, and a **small word-to-number map** turns spelled-out years into real integers for averages and for the cleaned file.
+
+2. **“Top 5” satisfaction scores:** The code **sorted scores low → high** but then took the **first** five rows, which were the **lowest** scores. I changed it so the script **keeps the five highest scores** and prints (and exports) those, which matches the idea of “top” satisfaction.
+
+After those fixes, the script also **writes a cleaned survey** to **`week3_survey_cleaned.csv`**. I **added helper functions** (e.g. department summaries, writing outputs), and the summarized numbers go to **`week3_analysis_results.csv`**.
 
 ## What was messy in the data
 
@@ -31,6 +37,8 @@ If **experience** was left as text (e.g. a number spelled out as a word), the sc
 **Understanding functions:** At first I wasn’t sure **why functions exist** or **why they’re often placed at the top** of a script. After talking with **Brock**, I understood that Python runs **top to bottom**, so defining a function **first** is like writing a **named set of instructions** that the rest of the program can **call** later. That keeps logic reusable and avoids repeating the same code.
 
 **Git / staging:** In Week 2 I accidentally treated a commit message as if it “applied” to a whole folder in a confusing way. This week I learned to **stage commits deliberately** — I can **choose which files go into each commit** and give **each commit its own message** (even if that means multiple smaller commits instead of one big one).
+
+**Analysis logic bug (Top 5 satisfaction):** The script **sorted satisfaction scores from lowest to highest**, then took the **first five rows** — which were actually the **lowest** scores, not the highest. I fixed it so the code **keeps the five highest scores** (after sorting, take the end of the list / top slice) and **re-sorts those five** so the printout lists the best scores first. That way the output matches the label “Top 5” and anything written to **`week3_analysis_results.csv`** is consistent with that logic.
 
 ## Tools & patterns I used
 
