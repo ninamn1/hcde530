@@ -1,0 +1,13 @@
+relation_category,related_type_name,related_type_url
+double_damage_from,poison,https://pokeapi.co/api/v2/type/4/
+double_damage_from,steel,https://pokeapi.co/api/v2/type/9/
+double_damage_to,fighting,https://pokeapi.co/api/v2/type/2/
+double_damage_to,dragon,https://pokeapi.co/api/v2/type/16/
+double_damage_to,dark,https://pokeapi.co/api/v2/type/17/
+half_damage_from,fighting,https://pokeapi.co/api/v2/type/2/
+half_damage_from,bug,https://pokeapi.co/api/v2/type/7/
+half_damage_from,dark,https://pokeapi.co/api/v2/type/17/
+half_damage_to,poison,https://pokeapi.co/api/v2/type/4/
+half_damage_to,steel,https://pokeapi.co/api/v2/type/9/
+half_damage_to,fire,https://pokeapi.co/api/v2/type/10/
+no_damage_from,dragon,https://pokeapi.co/api/v2/type/16/
