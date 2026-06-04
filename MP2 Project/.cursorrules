@@ -1,0 +1,101 @@
+You are an AI coding assistant helping build **Trend Match** — a Bolt web app for HCDE530 Mini Project 2.
+
+## Project summary
+A website where users upload a reference image and get the top 2–3 matching **named design trends** from a curated library, plus example images. Users can browse the full gallery without logging in. Logged-in users build Pinterest-style moodboards from matches and gallery images, view them in-app, and export as PNG.
+
+**Problem:** Designers see work they love but lack vocabulary to search for more (e.g., finding "neo-brutalism" only after Googling "graphic design trends"). Pinterest suggestions fail when the look is outside their usual algorithm.
+
+**Audience:** Design students and designers building moodboards who benefit from turning "I like this" into a named trend plus pullable examples.
+
+**Due:** Friday 11:59 PM PST. Work window: ~3 focused days.
+
+**Submit:** Live Bolt app + GitHub commits (no separate write-up required).
+
+## Platform and stack
+- **Build in Bolt** (not Lovable, not Jupyter). UI is the product — Design track.
+- **Auth + persistence:** Supabase (Bolt default) — login required only for moodboards, not for upload/browse/match.
+- **Trend matching:** Vision LLM (fastest path). Do not build custom embedding pipelines unless MVP is done early.
+- **API:** Free tier only — no paid subscriptions. Use **Google Gemini API** (free tier, vision). Claude Pro subscription does NOT provide API access for the app.
+- Store `GEMINI_API_KEY` in Bolt/Supabase secrets — never commit keys.
+
+## MVP scope (ship this first)
+1. Upload reference image → show **top 2–3 trend candidates** with name + 2–3 defining traits each.
+2. **Browse gallery** — all curated images, filterable by trend (no login).
+3. **Moodboard** (login required): add images from match results or gallery; editable (add/remove/reorder); view in-app; export PNG.
+4. Fixed, hand-curated library — no admin UI, no post-demo updates.
+
+### Out of scope for MP2
+- Thousands of images or live library editing
+- Audio, transcripts, or non-visual inputs
+- Paid APIs or custom ML training
+- Pinterest/social scraping or automated image harvesting
+- Perfect accuracy guarantees or formal evaluation
+
+## Curated trend library (v1: 10–15 trends)
+Target **5–10 strong example images per trend** (~75–150 total). Sources: own saves, Unsplash, freely usable web images. Fixed JSON/DB seed — not runtime scraping.
+
+Initial trend list (expand to 15 as time allows):
+1. Neo-brutalism
+2. Brutalism (web/UI)
+3. Swiss / International Typographic Style
+4. Memphis Design
+5. Y2K
+6. Glassmorphism
+7. Art Deco
+8. Minimalism
+9. Maximalism
+10. Bauhaus
+11. Flat Design
+12. Grunge
+13. Vaporwave
+14. Retro-futurism
+15. Art Nouveau
+
+Each trend record:
+```json
+{
+  "id": "neo-brutalism",
+  "name": "Neo-brutalism",
+  "traits": ["bold borders", "high contrast", "raw typography", "flat bright colors"],
+  "images": [{ "url": "...", "source": "unsplash", "attribution": "..." }]
+}
+```
+
+## Gemini matching prompt (guidance)
+- Send user image + compact list of trend names and traits from the library.
+- Ask for **top 2–3 matches** with one-sentence rationale each.
+- Constrain output to **only** trends in the library (no inventing new trend names).
+- On API failure, show a friendly error — do not silently guess.
+
+## Build order (deadline-driven)
+1. Seed trend data (even 5 trends × 5 images unblocks UI).
+2. Core pages: Home/upload, Results (2–3 matches), Browse gallery.
+3. Wire Gemini vision matching.
+4. Supabase auth + moodboard CRUD.
+5. Moodboard PNG export.
+6. Polish UI, test with neo-brutalism-style upload, push commits.
+
+## UI / UX principles
+- Pinterest-inspired moodboard UX — familiar add-to-board flow.
+- Anonymous users: upload, match, browse freely.
+- Gate only moodboard save behind login.
+- Mobile-friendly layouts; clear trend name and traits on results.
+- Show example images from the matched trend's curated set, not generic stock.
+
+## Code conventions
+- Prefer small, shippable changes aligned with MVP — avoid refactors mid-deadline.
+- Match existing Bolt/React/Supabase patterns in the repo.
+- Never commit API keys, `.env` secrets, or large binary dumps.
+- Commit often with clear messages for GitHub submission history.
+- If a feature threatens the deadline, cut scope — do not expand.
+
+## Windows / repo context
+- Course repo: `hcde530` on Windows/PowerShell.
+- MP2 docs live in `MP2 Project/`; Bolt app code may live in a separate GitHub repo synced from Bolt.
+- Do not use `&&` in PowerShell; quote paths with spaces.
+
+## Directory structure (update when files change)
+- `MP2 Project/`
+  - `.cursorrules`
+  - `bolt-prompt.md`
+  - `mp2.md`
