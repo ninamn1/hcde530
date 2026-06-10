@@ -10,15 +10,17 @@ This week my **submitted Week 4 work** is in **`A4 API Assignment`**: a Python s
 
 ### Class activity (HCDE 530 App Reviews API)
 
-I did not package the class activity in this reflection; the work described below is the **assignment** folder only.
+In class I used the course **App Reviews API** to pull review data (app name, date, rating, category, helpful votes) and export it to CSV. That activity felt directly tied to HCD: the reviews describe real tools in categories like **field research**, **usability testing**, and **collaborative whiteboard**—the same kinds of products HCD practitioners evaluate. My submitted reflection below focuses on the **assignment** folder, but the class exercise showed me why APIs matter for human-centered work, not just for games data.
 
 ### Assignment (PokeAPI — Fairy type)
 
 I wrote **`pokeapi_api_fairy_type_to_csv.py`**, which calls **`https://pokeapi.co/api/v2/type/fairy/`** and pulls **`pokemon`**, **`moves`**, and **`damage_relations`**. The script prints those results to the console and writes CSV exports.
 
-At first I saved **one** CSV that combined all three categories. The rows were technically correct, but **hard to scan** when everything was mixed together. I changed the script so it saves **three** separate files instead—**`pokeapi_fairy_type_responses_1.csv`** (Pokemon), **`pokeapi_fairy_type_responses_2.csv`** (moves), and **`pokeapi_fairy_type_responses_3.csv`** (damage relations). That separation made each table easier to read and interpret.
+At first I saved **one** CSV that combined all three categories. The rows were technically correct, but **hard to scan** when everything was mixed together. I changed the script so it saves **three** separate files instead—**`pokeapi_fairy_type_responses_1.csv`** (Pokemon), **`pokeapi_fairy_type_responses_2.csv`** (moves), and **`pokeapi_fairy_type_responses_3.csv`** (damage relations). That separation made each table easier to read and interpret. I think of that as a small **human-centered output decision**: the data was correct either way, but the format should match how a person (me, or a teammate) actually wants to read and use it.
 
 ## What I extracted and why those fields
+
+Choosing fields is not just a coding step—it is a **research-design choice**: I had to decide which parts of the API response would help me answer the questions I cared about, and leave the rest out so the export stayed focused.
 
 ### Pokemon (`pokeapi_fairy_type_responses_1.csv`)
 
@@ -42,11 +44,19 @@ Using the customer/waiter/chef metaphor: my script is the customer placing the o
 
 At first the idea of an API felt abstract and confusing to me. Comparing it to a **waiter helped**: the API acts like a **middle layer**—it takes my request, passes it along to wherever the data lives on the backend, and then **delivers the response back** to me in a predictable format.
 
-I also learned a practical lesson about outputs: combining everything into **one CSV** made the rows harder to scan, even though the data was correct. Splitting the export into **three CSV files** (Pokemon, moves, damage relations) matched how I wanted to read and interpret the tables.
+I also learned a practical lesson about outputs: combining everything into **one CSV** made the rows harder to scan, even though the data was correct. Splitting the export into **three CSV files** (Pokemon, moves, damage relations) matched how I wanted to read and interpret the tables—the same kind of judgment I would use when preparing research data for a team.
+
+## Connection to HCD
+
+In human-centered design, I often need data that lives **outside** my own notes or interviews: app store reviews, survey responses, product feedback, or usage metrics from a tool someone else hosts. An API is one way to request that data **reliably and repeatably** instead of copying information by hand from a website. The class App Reviews API was the clearest HCD example from this week: I was pulling structured evidence about tools in the HCD ecosystem, which is the kind of external data a practitioner might use to compare products or spot patterns in what users praise or complain about.
+
+The PokeAPI assignment taught the same workflow on a different domain. I still had to (1) **name the question** I wanted to answer, (2) **request only the relevant fields** from a large JSON response, and (3) **shape the output** so a person could interpret it. That mirrors how I would work with research data: start from a stakeholder or design question, pull the columns that support it, and export something readable enough to share in a critique or analysis—not a raw dump that only the person who wrote the script can decode.
+
+The waiter metaphor also fits an HCD lens. As a designer or researcher, I want to spend my time on **interpretation and decisions**, not on how a database is organized behind the scenes. The API acts as the middle layer: I place a clear order (the request), the backend prepares the data, and I receive a predictable response I can turn into insight. Understanding that layer helps me know what I can ask for programmatically when I am scoping a study or building a lightweight research tool.
 
 ## Competency link
 
-This competency connects directly to earlier file and cleaning work: APIs are another data source, but the downstream process is similar. I still have to identify useful fields, transform nested JSON into tabular rows, and export clean CSVs that are readable and analyzable. In other words, API acquisition gives me structured input; competencies 2 and 3 help me make that input usable for analysis and decisions.
+This competency connects directly to earlier file and cleaning work: APIs are another data source, but the downstream process is similar. I still have to identify useful fields, transform nested JSON into tabular rows, and export clean CSVs that are readable and analyzable. In other words, API acquisition gives me structured input; competencies 2 and 3 help me make that input usable for analysis and decisions—and in HCD, that chain matters because **bad or unreadable data can lead to the wrong design conclusion**, even when the original source was accurate.
 
 ## Open questions / next time
 
